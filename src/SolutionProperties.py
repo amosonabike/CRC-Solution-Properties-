@@ -37,20 +37,20 @@ params = {
 }
 plt.rcParams.update(params)
 
-############
+# ###########
 
 mfs_range = np.linspace(0,1,1000)
 
 filepath_CRC_data = 'src/CRC Solution Properties.txt'
 df_CRC_data = pd.read_csv(filepath_CRC_data, sep = '\t', comment= '#', encoding='latin-1').drop('Row',axis=1)
 
-#df_CRC_data.fillna('Empty', inplace=True)
+# df_CRC_data.fillna('Empty', inplace=True)
 
 CAS_numbers = df_CRC_data.CAS_Reg_No.unique()
 
 grouped_CRC_data = df_CRC_data.groupby('CAS_Reg_No')
 
-###############
+# ##############
 
 #Descriptors of solutes
 solutions = ['SubHeader',
@@ -60,7 +60,11 @@ solutions = ['SubHeader',
              'Mol_wt',
              'data',
              'MFS_molal',
-             'MFS_molar']
+             'MFS_molar',
+             'Density',
+             'Refractive_index_n',
+             'T_freeze_supression',
+             'Viscosity_dynamic']
 
 #Different ways of expressing concentration
 conc_measurements = ['Mass_prct',
@@ -104,9 +108,10 @@ for key in solutions:
         continue
     for number in CAS_numbers:
         solutions[key].append(grouped_CRC_data.get_group(number).iloc[0][key])
-        
-#########################
 
+# ########################
+
+# +
 def GUI():
 
     solute_dropdown = widgets.Dropdown(options = solutions['Solute'], value = 'Sodium chloride')
@@ -150,16 +155,19 @@ def GUI():
                 elif x_series == 'Mass_fraction':
                     line_fit, = ax.plot(mfs_range, poly_function(mfs_range), ls = ':', lw = 3, color = 'r', label = 'MFS Fit')
 
+                solutions[y_series][solutions['Solute'].index(solute_name)] = poly_function
+                    
             except Exception as e: 
                 print(e)
                 warnings.warn('Failed to parameterise data}')
+                solutions[y_series][solutions['Solute'].index(solute_name)] = None
                 pass
 
             plt.legend()
             ax.set_xlabel(x_series)
             ax.set_ylabel(y_series)
             plt.show()
-
+            
         return
 
     def show_mol_ratio(solute_name, order = 3):
@@ -186,13 +194,20 @@ def GUI():
                 #solution_properties['MFS_molar'] = np.poly1d(np.polyfit(data.Mass_fraction, data.Molarity_c, order))
                 plt.legend()
                 plt.show()
-
-                return molal_fit, molar_fit
+                
+                solutions['MFS_molal'][solutions['Solute'].index(solute_name)] = molal_fit
+                solutions['MFS_molar'][solutions['Solute'].index(solute_name)] = molar_fit
+                
+                return
 
             except:
                 plt.show()
                 warnings.warn("Failed to parameterise MFS to either Molality or Molarity. Consider interpolating from experimental data if possible")
-                return None, None
+                
+                solutions['MFS_molal'][solutions['Solute'].index(solute_name)] = None
+                solutions['MFS_molar'][solutions['Solute'].index(solute_name)] = None
+                
+                return
 
         return
 
@@ -201,7 +216,7 @@ def GUI():
         with output:
 
             #data = solutions['data'][solutions['Solute'].index(change.new)]
-            solutions['MFS_molal'][solutions['Solute'].index(solute_dropdown.value)],solutions['MFS_molar'][solutions['Solute'].index(solute_dropdown.value)] = show_mol_ratio(change.new)
+            show_mol_ratio(change.new)
             show_poly_fit(change.new, conc_dropdown.value, property_dropdown.value)
             IPython.display.clear_output(wait=True)
 
@@ -210,7 +225,7 @@ def GUI():
     def conc_dropdown_handler(change):
         with output:
             #data = solutions['data'][solutions['Solute'].index(solute_dropdown.value)]
-            solutions['MFS_molal'][solutions['Solute'].index(solute_dropdown.value)],solutions['MFS_molar'][solutions['Solute'].index(solute_dropdown.value)] = show_mol_ratio(solute_dropdown.value)
+            show_mol_ratio(solute_dropdown.value)
             show_poly_fit(solute_dropdown.value, conc_dropdown.value, property_dropdown.value)
             IPython.display.clear_output(wait=True)
 
@@ -220,7 +235,7 @@ def GUI():
         #output.clear_output()
         with output:
             #data = solutions['data'][solutions['Solute'].index(solute_dropdown.value)]
-            solutions['MFS_molal'][solutions['Solute'].index(solute_dropdown.value)],solutions['MFS_molar'][solutions['Solute'].index(solute_dropdown.value)] = show_mol_ratio(solute_dropdown.value)
+            show_mol_ratio(solute_dropdown.value)
             show_poly_fit(solute_dropdown.value, conc_dropdown.value, property_dropdown.value)
             IPython.display.clear_output(wait=True)
         return
@@ -234,4 +249,6 @@ def GUI():
     display(input_widgets)
     display(output)
     #IPython.display.clear_output(wait=True)    
+
+
 
