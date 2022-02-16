@@ -192,6 +192,10 @@ def GUI():
                 #solution_properties['MFS_molal'] = np.poly1d(np.polyfit(data.Mass_fraction, data.Molality_m, order))
                 line_fit_b, = ax1.plot(mfs_range, molar_fit(mfs_range), ls = ':', lw = 3, color = 'dodgerblue', label = 'MFS to Molarity Fit')
                 #solution_properties['MFS_molar'] = np.poly1d(np.polyfit(data.Mass_fraction, data.Molarity_c, order))
+                
+                ax0.axvline(1, color = 'k', lw = 0.5)
+                ax1.axvline(1, color = 'k', lw = 0.5)
+                
                 plt.legend()
                 plt.show()
                 
@@ -200,7 +204,8 @@ def GUI():
                 
                 return
 
-            except:
+            except Exception as e: 
+                print(e)
                 plt.show()
                 warnings.warn("Failed to parameterise MFS to either Molality or Molarity. Consider interpolating from experimental data if possible")
                 
@@ -208,8 +213,6 @@ def GUI():
                 solutions['MFS_molar'][solutions['Solute'].index(solute_name)] = None
                 
                 return
-
-        return
 
     def solute_dropdown_handler(change):
         #output.clear_output()
@@ -250,5 +253,107 @@ def GUI():
     display(output)
     #IPython.display.clear_output(wait=True)    
 
+
+
+
+# +
+def show_poly_fit(solute_name, x_series , y_series, order = 3):
+    '''
+    Takes the solute name and chosen poperties to plot and performs a poly fit
+    '''
+    data = solutions['data'][solutions['Solute'].index(solute_name)]
+    mfs_to_molal = solutions['MFS_molal'][solutions['Solute'].index(solute_name)]
+    mfs_to_molar = solutions['MFS_molar'][solutions['Solute'].index(solute_name)]
+
+    fig, ax = plt.subplots(constrained_layout=True)
+
+    '''# move the toolbar to the bottom
+    fig.canvas.toolbar_position = 'bottom'''
+    ax.grid(True)    
+    line_data, = ax.plot(data[x_series], data[y_series], color = 'k', lw = 4, label = "Reference Data")
+
+    #get a poly fit to ratio
+    try:
+        poly_fit = np.polyfit(data['Mass_fraction'],
+                      data[y_series],
+                      order)
+
+        poly_function = np.poly1d(poly_fit)
+
+        #showing fit to mfs molal or molar ratio
+        if x_series == 'Mass_prct':
+            line_fit, = ax.plot(100 * mfs_range, poly_function(mfs_range), ls = ':', lw = 3, color = 'b', label = 'Mass % Fit')
+        elif x_series == 'Molality_m':
+            line_fit, = ax.plot(mfs_to_molal(mfs_range), poly_function(mfs_range), ls = ':', lw = 3, color = 'magenta', label = 'Molality Fit')
+        elif x_series == 'Molarity_c':
+            line_fit, = ax.plot(mfs_to_molar(mfs_range), poly_function(mfs_range), ls = ':', lw = 3, color = 'cyan', label = 'Molarity Fit')
+        elif x_series == 'Mass_fraction':
+            line_fit, = ax.plot(mfs_range, poly_function(mfs_range), ls = ':', lw = 3, color = 'r', label = 'MFS Fit')
+
+        solutions[y_series][solutions['Solute'].index(solute_name)] = poly_function
+
+    except Exception as e: 
+        print(e)
+        warnings.warn('Failed to parameterise data}')
+        solutions[y_series][solutions['Solute'].index(solute_name)] = None
+        pass
+
+    plt.legend()
+    ax.set_xlabel(x_series)
+    ax.set_ylabel(y_series)
+    plt.show()
+
+    return
+
+def show_mol_ratio(solute_name, order = 3):
+
+    data = solutions['data'][solutions['Solute'].index(solute_name)]
+
+    fig, (ax0, ax1) = plt.subplots( 1, 2, constrained_layout=True)
+    ax0.set_xlabel(conc_measurements['Mass_fraction'])
+    ax1.set_xlabel(conc_measurements['Mass_fraction'])
+    ax0.set_ylabel(conc_measurements['Molality_m'])
+    ax1.set_ylabel(conc_measurements['Molarity_c'])
+
+    line_a, = ax0.plot(data.Mass_fraction, data.Molality_m, color = 'k', lw = 4)
+    line_b, = ax1.plot(data.Mass_fraction, data.Molarity_c, color = 'k', lw = 4)
+
+    try:
+        molal_fit = np.poly1d(np.polyfit(data.Mass_fraction, data.Molality_m, order))
+        molar_fit = np.poly1d(np.polyfit(data.Mass_fraction, data.Molarity_c, order))
+
+        line_fit_a, = ax0.plot(mfs_range, molal_fit(mfs_range), ls = ':', lw = 3, color = 'dodgerblue', label = 'MFS to Molality Fit')
+        #solution_properties['MFS_molal'] = np.poly1d(np.polyfit(data.Mass_fraction, data.Molality_m, order))
+        line_fit_b, = ax1.plot(mfs_range, molar_fit(mfs_range), ls = ':', lw = 3, color = 'dodgerblue', label = 'MFS to Molarity Fit')
+        #solution_properties['MFS_molar'] = np.poly1d(np.polyfit(data.Mass_fraction, data.Molarity_c, order))
+
+        ax0.axvline(1, color = 'k', lw = 0.5)
+        ax1.axvline(1, color = 'k', lw = 0.5)
+
+        plt.legend()
+        plt.show()
+
+        solutions['MFS_molal'][solutions['Solute'].index(solute_name)] = molal_fit
+        solutions['MFS_molar'][solutions['Solute'].index(solute_name)] = molar_fit
+
+        return
+
+    except Exception as e: 
+        print(e)
+        plt.show()
+        warnings.warn("Failed to parameterise MFS to either Molality or Molarity. Consider interpolating from experimental data if possible")
+
+        solutions['MFS_molal'][solutions['Solute'].index(solute_name)] = None
+        solutions['MFS_molar'][solutions['Solute'].index(solute_name)] = None
+
+        return
+
+
+# -
+
+def get_properties(name = 'Sodium chloride', quant_term = 'Mass_fraction', property_name = 'Density'):
+    show_mol_ratio(name)
+    show_poly_fit(name, quant_term, property_name)
+    return
 
 
