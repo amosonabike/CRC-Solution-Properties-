@@ -13,8 +13,8 @@ resolution = 300 #dpi
 tick_size = 18
 fontlabel_size = 18
 
-figure_width = 233 / 25.4 #conversion to mm is 25.4
-figure_height = 144 / 25.4 #conversion to mm is 25.4
+figure_width = 377 / 25.4 #conversion to mm is 25.4
+figure_height = 233 / 25.4 #conversion to mm is 25.4
 figure_size = (figure_width, figure_height)
 
 params = {
@@ -130,7 +130,7 @@ def GUI():
 
         with output:
 
-            fig, ax = plt.subplots(constrained_layout=True)
+            fig, ax = plt.subplots()
 
             '''# move the toolbar to the bottom
             fig.canvas.toolbar_position = 'bottom'''
@@ -175,7 +175,7 @@ def GUI():
         data = solutions['data'][solutions['Solute'].index(solute_name)]
 
         with output:
-            fig, (ax0, ax1) = plt.subplots( 1, 2, constrained_layout=True)
+            fig, (ax0, ax1) = plt.subplots( 1, 2, )
             ax0.set_xlabel(conc_measurements['Mass_fraction'])
             ax1.set_xlabel(conc_measurements['Mass_fraction'])
             ax0.set_ylabel(conc_measurements['Molality_m'])
@@ -196,7 +196,8 @@ def GUI():
                 ax0.axvline(1, color = 'k', lw = 0.5)
                 ax1.axvline(1, color = 'k', lw = 0.5)
                 
-                plt.legend()
+                ax0.legend(fontsize = 'large')
+                ax1.legend(fontsize = 'large')
                 plt.show()
                 
                 solutions['MFS_molal'][solutions['Solute'].index(solute_name)] = molal_fit
@@ -265,7 +266,7 @@ def show_poly_fit(solute_name, x_series , y_series, order = 3):
     mfs_to_molal = solutions['MFS_molal'][solutions['Solute'].index(solute_name)]
     mfs_to_molar = solutions['MFS_molar'][solutions['Solute'].index(solute_name)]
 
-    fig, ax = plt.subplots(constrained_layout=True)
+    fig, ax = plt.subplots()
 
     '''# move the toolbar to the bottom
     fig.canvas.toolbar_position = 'bottom'''
@@ -309,7 +310,7 @@ def show_mol_ratio(solute_name, order = 3):
 
     data = solutions['data'][solutions['Solute'].index(solute_name)]
 
-    fig, (ax0, ax1) = plt.subplots( 1, 2, constrained_layout=True)
+    fig, (ax0, ax1) = plt.subplots( 1, 2, )
     ax0.set_xlabel(conc_measurements['Mass_fraction'])
     ax1.set_xlabel(conc_measurements['Mass_fraction'])
     ax0.set_ylabel(conc_measurements['Molality_m'])
@@ -330,7 +331,9 @@ def show_mol_ratio(solute_name, order = 3):
         ax0.axvline(1, color = 'k', lw = 0.5)
         ax1.axvline(1, color = 'k', lw = 0.5)
 
-        plt.legend()
+        ax0.legend(fontsize = 'large')
+        ax1.legend(fontsize = 'large')
+        
         plt.show()
 
         solutions['MFS_molal'][solutions['Solute'].index(solute_name)] = molal_fit
