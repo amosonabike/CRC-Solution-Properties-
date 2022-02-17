@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-pd.set_option('display.max_rows', 500)
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 import ipywidgets as widgets
